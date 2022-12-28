@@ -1,7 +1,7 @@
 package httpserver
 
 import (
-	"laches1sm/help_pix_go/adapters"
+	"github.com/laches1sm/help_pix_go/src/adapters"
 	"log"
 	"net/http"
 )
@@ -20,10 +20,10 @@ type HelpPixServer struct {
 }
 
 // SetupRoutes configures the routes of the API
-// func (srv *HelpPixServer) SetupRoutes() {
-// 	srv.Mux.Handle(UserDataEndpoint, http.HandlerFunc(srv.ParrotHTTPAdapter.GibeParrot))
-// 	srv.Mux.Handle(ResultEndpoint, http.HandlerFunc(srv.ParrotHTTPAdapter.AddParrot))
-// }
+func (srv *HelpPixServer) SetupRoutes() {
+	srv.Mux.Handle(UserDataEndpoint, http.HandlerFunc(srv.HelpPixHTTPAdapter.GetSummonerInfo))
+	// srv.Mux.Handle(ResultEndpoint, http.HandlerFunc(srv.ParrotHTTPAdapter.AddParrot))
+}
 
 // Start sets up the HTTP webserver to listen and handle traffic. It
 // takes the port number to listen on as a parameter in the form ":PORT_NUMBER"

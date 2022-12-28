@@ -1,22 +1,21 @@
 package models
 
 type ChampionData struct {
-	Name                    string
-	AverageKillParticaption float64
-	AverageCreepScore       float64
-	LastRunesUsed           map[string]string
-	LastItemsBuilt          map[string]string
+	Name                    string `json:"champ_name"`
+	AverageKillParticaption int `json:"avgKP"`
+	AverageCreepScore       int `json:"avgCS"`
+	AverageDamage           int `json:"averageDamage"`
 }
-type SummonerData struct{
-	SummonerName string
-	PUUID string
-	AccountID string
-	ChampionsPlayed []string
-	ChampData []*ChampionData
-	Winrate                 float64
-	AmountOfGamesPlayed     int
+type SummonerData struct {
+	SummonerName        string `json:"summonerName"`
+	PUUID               string `json:"pUUID"`
+	AccountID           string `json:"accountID"`
+	ChampionsPlayed     []string `json:"championsPlayed"`
+	ChampData           []*ChampionData `json:"champData"`
+	Winrate             int `json:"winrate"`
+	AmountOfGamesPlayed int `json:"amountOfGamesPlayed"`
 }
-type FormResponse struct{
-	SummonerName string
-	Region string
+type FormResponse struct {
+	SummonerName string `json:"summonerName"`
+	Region       string `json:"region"`
 }
