@@ -13,17 +13,18 @@ import (
 	"github.com/KnutZuidema/golio/riot/lol"
 	"github.com/laches1sm/help_pix_go/src/models"
 	"github.com/sirupsen/logrus"
+	"github.com/laches1sm/help_pix_go/src/infrastructure"
 )
 
 type HelpPixHTTPAdapter struct {
-	Logger log.Logger
-	Infra  infrastructure.HelpPixInfra
+	*log.Logger
+	infrastructure.HelpPixInfra
 }
 
-func NewHelpPixAdapter(logger log.Logger, infra infrastructure.HelpPixInfra) *HelpPixHTTPAdapter {
+func NewHelpPixAdapter(logger *log.Logger, infra infrastructure.HelpPixInfra) *HelpPixHTTPAdapter {
 	return &HelpPixHTTPAdapter{
-		Logger: logger,
-		Infra:  infra,
+	    logger,
+		infra,
 	}
 }
 
@@ -172,12 +173,15 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 		ChampData:           champsData,
 	}
 
-	// add infra stuff here... set up firebase in infrafolder
-	parrotGet, err := json.Marshal(resp)
+	resp, err := adapter.HelpPixInfra.CreateSummoner(summonerData)
+	if err != nil{
+		return
+	}
+	summonerGet, err := json.Marshal(resp)
 	if err != nil {
 		return
 	}
-	writeResponse(w, parrotGet, http.StatusOK)
+	writeResponse(w, summonerGet, http.StatusOK)
 }
 
 func createNewChampData(champName string, cs []int, killPart []int, dmg []int) *models.ChampionData {

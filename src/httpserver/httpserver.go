@@ -15,7 +15,7 @@ const (
 // HelpPixServer is an interface to an HTTP server which handles requests
 type HelpPixServer struct {
 	Mux                *http.ServeMux
-	Logger             log.Logger
+	Logger             *log.Logger
 	HelpPixHTTPAdapter *adapters.HelpPixHTTPAdapter
 }
 
@@ -32,7 +32,7 @@ func (srv *HelpPixServer) Start(port string) error {
 }
 
 // NewParrotServer returns an instance of a configured ParrotServer
-func NewParrotServer(logger log.Logger, adapter *adapters.HelpPixHTTPAdapter) *HelpPixServer {
+func NewParrotServer(logger *log.Logger, adapter *adapters.HelpPixHTTPAdapter) *HelpPixServer {
 	httpServer := &HelpPixServer{
 		Mux:                http.NewServeMux(),
 		Logger:             logger,
