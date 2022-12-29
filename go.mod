@@ -3,9 +3,11 @@ module github.com/laches1sm/help_pix_go
 go 1.19
 
 require (
+	cloud.google.com/go/firestore v1.9.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/KnutZuidema/golio v0.0.0-20220228083517-e9a630a5acc7
 	github.com/sirupsen/logrus v1.4.2
+	github.com/yukithm/json2csv v0.1.2
 	google.golang.org/api v0.105.0
 )
 
@@ -13,7 +15,6 @@ require (
 	cloud.google.com/go v0.105.0 // indirect
 	cloud.google.com/go/compute v1.13.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.2 // indirect
-	cloud.google.com/go/firestore v1.9.0 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	cloud.google.com/go/longrunning v0.3.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect

@@ -11,9 +11,10 @@ import (
 	"github.com/KnutZuidema/golio"
 	"github.com/KnutZuidema/golio/api"
 	"github.com/KnutZuidema/golio/riot/lol"
+	"github.com/laches1sm/help_pix_go/src/infrastructure"
 	"github.com/laches1sm/help_pix_go/src/models"
 	"github.com/sirupsen/logrus"
-	"github.com/laches1sm/help_pix_go/src/infrastructure"
+	"github.com/yukithm/json2csv"
 )
 
 type HelpPixHTTPAdapter struct {
@@ -23,7 +24,7 @@ type HelpPixHTTPAdapter struct {
 
 func NewHelpPixAdapter(logger *log.Logger, infra infrastructure.HelpPixInfra) *HelpPixHTTPAdapter {
 	return &HelpPixHTTPAdapter{
-	    logger,
+		logger,
 		infra,
 	}
 }
@@ -104,55 +105,54 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 	var kp []int
 	var dmg []int
 	var champsData []*models.ChampionData
-	// var wardStats interface{} // sort out this type later
 	// while going through match history, filter for only these particular champs: Yuumi, Janna, Sona, Soraka, Ammumu, Taric, Morgana
 	for _, v := range matchHistoryActual {
 		// get match info here
 		// make sure we get partipatnt info for the correct user
 		if v.Info.GameMode == "RANKED_SOLO_5x5" {
-			//var id string
-			//id = string(v.Info.GameID)
+			id := string(v.Info.GameID)
 			for _, v := range v.Info.Participants {
 				if v.PUUID == summoner.PUUID {
 					// We only want data if it's for the champions listed above...
 					if v.ChampionName == "Yuumi" || v.ChampionName == "Janna" || v.ChampionName == "Sona" || v.ChampionName == "Soraka" || v.ChampionName == "Ammumu" || v.ChampionName == "Taric" || v.ChampionName == "Morgana" {
 						champsPlayed = append(champsPlayed, v.ChampionName)
-						// figure out winrate??
-						// WIn is a boolean, so go through each true and false I guess?
-						if v.Win == true {
+
+						if v.Win {
 							wins = append(wins, v.Win)
 						}
 						win := len(wins)
 						winrate = win / len(matchHistoryActual) * 100
 
-						// Need to fill in the ChampData struct...
-						// What do we need in champ data??
-						// Runes, items, avg KP and CS...
 						cs = append(cs, v.TotalMinionsKilled)
-						// figure out avg here
-						// Riot APIs store kills and assists, just add them together i guess?
+
 						killPart := v.Kills + v.Assists
 						kp = append(kp, killPart)
-						// get items, another thing came to mind, should we get info for total dmg dealt?
+
 						dmg = append(dmg, v.TotalDamageDealt)
 
+						wardStats := make(map[string]int)
 						// And if they're in the support role, check for amount of wards bought/placed??
-						// if v.TeamPosition == "UTILITY" {
-						// 	// do something with these i guess
-						// 	wardStats[id]["wardsKilled"] = v.WardsKilled
-						// 	wardStats[id]["wardsPlaced"] = v.WardsPlaced
-						// 	wardStats[id]["pinkWards"] = v.DetectorWardsPlaced
-
-						// }
+						if v.TeamPosition == "UTILITY" {
+							wardStats["wardsKilled"] = v.WardsKilled
+							wardStats["wardsPlaced"] = v.WardsPlaced
+							wardStats["pinkWards"] = v.DetectorWardsPlaced
+						}
 
 						// TODO: do something with items here
-						// rito pls i beg make getting items a lot nicer than having to perform a look up on ids
-						// just lookup the most common items these bots buy ig
 
-						// We need champdata for each champ played?
-						// something like len champname create a new champ data struct? could be a nice new func
+						// For the new jungler bots, check how many objectives have been taken. This isn't perfect - I've had games as jg where I've never been able to get a single objective (thanks botlane!!)
+						objectives := make(map[string]int)
+						if v.TeamPosition == "JUNGLE" {
+							baronKill := v.BaronKills
+							drag := v.DragonKills
+							dmgObj := v.DamageDealtToObjectives
+							objectives["BaronKills"] = baronKill
+							objectives["DragonKills"] = drag
+							objectives["DamageDealtToObjectives"] = dmgObj
+						}
+
 						// place this somewhere else i guess idk i'm writing this at 3am and i'm off my meds so fuck me i guess
-						champData := createNewChampData(v.ChampionName, cs, kp, dmg)
+						champData := createNewChampData(v.ChampionName, cs, kp, dmg, v.TeamPosition, objectives, id, wardStats)
 						champsData = append(champsData, champData)
 
 					}
@@ -174,17 +174,23 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 	}
 
 	resp, err := adapter.HelpPixInfra.CreateSummoner(summonerData)
-	if err != nil{
+	if err != nil {
 		return
 	}
 	summonerGet, err := json.Marshal(resp)
 	if err != nil {
 		return
 	}
-	writeResponse(w, summonerGet, http.StatusOK)
+	// writeResponse(w, summonerGet, http.StatusOK)
+
+	// After we successfully create our summoner, we need to convert the data into a CSV so I can feed it into the model.
+	_, _ = json2csv.JSON2CSV(summonerGet)
+	// send csv to model
+	// write a different response based on what the model says
+
 }
 
-func createNewChampData(champName string, cs []int, killPart []int, dmg []int) *models.ChampionData {
+func createNewChampData(champName string, cs []int, killPart []int, dmg []int, teamPos string, objectives map[string]int, gameID string, wardStats map[string]int) *models.ChampionData {
 	// calcuate avg cs
 	var sumCS int
 	for v := range cs {
@@ -212,5 +218,9 @@ func createNewChampData(champName string, cs []int, killPart []int, dmg []int) *
 		AverageKillParticaption: avgKP,
 		AverageCreepScore:       avgCS,
 		AverageDamage:           avgDMG,
+		TeamPosition:            teamPos,
+		ObjectiveDmg:            objectives,
+		GameID:                  gameID,
+		WardStats:               wardStats,
 	}
 }
