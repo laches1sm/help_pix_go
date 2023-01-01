@@ -1,0 +1,30 @@
+{
+    "summonerName": "test",
+    "pUUID": 2,
+    "accountID": 1,
+    "championsPlayed": ["soraka", "janna"],
+    "champData": [
+        {
+            "champ_name": "Soraka",
+            "avgKP": 1,
+            "avgCS": 2,
+            "averageDamage": 0,
+            "teamPosition": "UTILITY",
+            "objectiveDamage": {
+                "BaronKills": 0,
+                "DragonKills": 0,
+                "DamageDealtToObjectives": 0
+            },
+            "gameID": "134343",
+            "wardStats": {
+                "wardsKilled": 0,
+                "wardsPlaced": 0,
+                "pinkWards": 0
+            },
+            "summonerSpells": ["Flash", "Barrier"]
+        }
+    ],
+    "winrate": 10,
+    "amountOfGamesPlayed": 420,
+    "botGamesPlayed": 69
+}

@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -105,11 +106,17 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 	var kp []int
 	var dmg []int
 	var champsData []*models.ChampionData
+	var botIntroGamesPlayed []string
 	// while going through match history, filter for only these particular champs: Yuumi, Janna, Sona, Soraka, Ammumu, Taric, Morgana
 	for _, v := range matchHistoryActual {
+		// also need to check for large amount of bot games
+		if v.Info.QueueID == 830 { // bot intro games
+			// just check for the amount of them tbh...
+			botIntroGamesPlayed = append(botIntroGamesPlayed, v.Metadata.MatchID)
+		}
 		// get match info here
 		// make sure we get partipatnt info for the correct user
-		if v.Info.GameMode == "RANKED_SOLO_5x5" {
+		if v.Info.QueueID == 420 { // I see what you did there riot, 420 is the id for ranked games
 			id := string(v.Info.GameID)
 			for _, v := range v.Info.Participants {
 				if v.PUUID == summoner.PUUID {
@@ -138,7 +145,29 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 							wardStats["pinkWards"] = v.DetectorWardsPlaced
 						}
 
+						var summonerSpells []string
+						summonerSpell1, _ := client.DataDragon.GetSummonerSpell(fmt.Sprint(v.Summoner1ID))
+						summonerSpell2, _ := client.DataDragon.GetSummonerSpell(fmt.Sprint((v.Summoner2ID)))
+						summonerSpells = append(summonerSpells, summonerSpell1.Name)
+						summonerSpells = append(summonerSpells, summonerSpell2.Name)
+
 						// TODO: do something with items here
+						// get items with datadragon
+						var items []string
+						i1, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item1))
+						i2, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item2))
+						i3, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item3))
+						i4, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item4))
+						i5, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item5))
+						i6, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item6))
+						items = append(items, i1.Name)
+						items = append(items, i2.Name)
+						items = append(items, i3.Name)
+						items = append(items, i4.Name)
+						items = append(items, i5.Name)
+						items = append(items, i6.Name)
+					
+					
 
 						// For the new jungler bots, check how many objectives have been taken. This isn't perfect - I've had games as jg where I've never been able to get a single objective (thanks botlane!!)
 						objectives := make(map[string]int)
@@ -152,7 +181,7 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 						}
 
 						// place this somewhere else i guess idk i'm writing this at 3am and i'm off my meds so fuck me i guess
-						champData := createNewChampData(v.ChampionName, cs, kp, dmg, v.TeamPosition, objectives, id, wardStats)
+						champData := createNewChampData(v.ChampionName, cs, kp, dmg, v.TeamPosition, objectives, id, wardStats, summonerSpells, items)
 						champsData = append(champsData, champData)
 
 					}
@@ -171,6 +200,7 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 		Winrate:             winrate,
 		AmountOfGamesPlayed: len(matchHistoryActual),
 		ChampData:           champsData,
+		BotGamesPlayed:      len(botIntroGamesPlayed),
 	}
 
 	resp, err := adapter.HelpPixInfra.CreateSummoner(summonerData)
@@ -181,16 +211,46 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 	if err != nil {
 		return
 	}
-	// writeResponse(w, summonerGet, http.StatusOK)
 
-	// After we successfully create our summoner, we need to convert the data into a CSV so I can feed it into the model.
-	_, _ = json2csv.JSON2CSV(summonerGet)
+	// This is some mank on my part. 
+	// Looking back at the JSON blob we create vs an actual CSV, I think the best way to send data to the model is one row per game.
+	for _, v := range summonerData.ChampData{
+		// Create a new model 
+		csvModel := &models.SummonerCSV{
+			SummonerName: summonerData.SummonerName,
+			AverageKillParticaption: v.AverageKillParticaption,
+			AverageCreepScore: v.AverageCreepScore,
+			AverageDamage: v.AverageDamage,
+			TeamPosition: v.TeamPosition,
+			ObjectiveDmg: v.ObjectiveDmg,
+			GameID: v.GameID,
+			WardStats: v.WardStats,
+			SummonerSpells: v.SummonerSpells,
+			Items: v.Items,
+			PUUID: summonerData.PUUID,
+			AccountID: summonerData.AccountID,
+			ChampName: v.Name,
+			Winrate: summonerData.Winrate,
+			AmountOfGamesPlayed: summonerData.AmountOfGamesPlayed,
+			BotGamesPlayed: summonerData.BotGamesPlayed, 
+		}
+
+			// After we successfully create our summoner, we need to convert the data into a CSV so I can feed it into the model.
+	        _, _ = json2csv.JSON2CSV(csvModel)
+
+			// Do some stuff with GoLearn here.
+			// TODO: make seperate folder for Golearn
+
+	}
+	writeResponse(w, summonerGet, http.StatusOK)
+
+
 	// send csv to model
 	// write a different response based on what the model says
 
 }
 
-func createNewChampData(champName string, cs []int, killPart []int, dmg []int, teamPos string, objectives map[string]int, gameID string, wardStats map[string]int) *models.ChampionData {
+func createNewChampData(champName string, cs []int, killPart []int, dmg []int, teamPos string, objectives map[string]int, gameID string, wardStats map[string]int, summoners []string, items []string) *models.ChampionData {
 	// calcuate avg cs
 	var sumCS int
 	for v := range cs {
@@ -222,5 +282,7 @@ func createNewChampData(champName string, cs []int, killPart []int, dmg []int, t
 		ObjectiveDmg:            objectives,
 		GameID:                  gameID,
 		WardStats:               wardStats,
+		SummonerSpells:          summoners,
+		Items: items,
 	}
 }
