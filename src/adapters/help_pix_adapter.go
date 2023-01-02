@@ -216,7 +216,7 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 	// Looking back at the JSON blob we create vs an actual CSV, I think the best way to send data to the model is one row per game.
 	for _, v := range summonerData.ChampData{
 		// Create a new model 
-		csvModel := &models.SummonerCSV{
+		_ = &models.SummonerCSV{
 			SummonerName: summonerData.SummonerName,
 			AverageKillParticaption: v.AverageKillParticaption,
 			AverageCreepScore: v.AverageCreepScore,
@@ -236,8 +236,13 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 		}
 
 			// After we successfully create our summoner, we need to convert the data into a CSV so I can feed it into the model.
-	        _, _ = json2csv.JSON2CSV(csvModel)
+	       //  _, _ = json2csv.JSON2CSV(csvModel)
 
+			// create csv file....
+			// send it to go learn
+			// give user csv file??? 
+			// how to handle this idk
+			
 			// Do some stuff with GoLearn here.
 			// TODO: make seperate folder for Golearn
 

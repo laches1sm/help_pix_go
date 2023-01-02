@@ -44,5 +44,10 @@ type SummonerCSV struct {
 	Winrate                 int            `json:"winrate"`
 	AmountOfGamesPlayed     int            `json:"amountOfGamesPlayed"`
 	BotGamesPlayed          int            `json:"botGamesPlayed"`
-	isBot                   bool           `json:"isBot"` // N.B. this field is ONLY for training the model. 
 }
+
+type Result struct{
+	IsBot bool `json:"isBot"`
+}
+
+
