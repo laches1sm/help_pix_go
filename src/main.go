@@ -5,18 +5,16 @@ import (
 
 	"github.com/laches1sm/help_pix_go/src/adapters"
 	"github.com/laches1sm/help_pix_go/src/httpserver"
-	"github.com/laches1sm/help_pix_go/src/infrastructure"
 )
 
 func main() {
-	log := log.New(log.Writer(), "help-pix", 0)
-    var infra infrastructure.HelpPixInfra
-	adapter := adapters.NewHelpPixAdapter(log, infra)
+	log := log.New(log.Writer(), "help-pix-", 0)
+	adapter := adapters.NewHelpPixAdapter(log)
 
 	server := httpserver.NewParrotServer(log, adapter)
+	log.Print(`Creating server`)
 	server.SetupRoutes()
 	if err := server.Start(httpserver.ServerPort); err != nil {
 		log.Println(err.Error())
 	}
-
 }
