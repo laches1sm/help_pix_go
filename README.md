@@ -7,7 +7,7 @@
 - ```make run``` 
 
 - You will need:
-    * a Riot API key (obtained (here)[https://developer.riotgames.com/])
+    * a Riot API key (obtained [here](https://developer.riotgames.com/))
 
 #### To do ####
 - Writing unit tests! 
