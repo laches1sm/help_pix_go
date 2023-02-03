@@ -4,6 +4,12 @@
 
 ### How to run ###
 
-- TODO: set up Makefile and installation steps
+- ```make run``` 
 
-- Contributions welcome!
+- You will need:
+    * a Riot API key (obtained (here)[https://developer.riotgames.com/])
+
+#### To do ####
+- Writing unit tests! 
+- Contributions welcome.
+- Finish off machine learning part....

@@ -22,7 +22,7 @@ type HelpPixHTTPAdapter struct {
 
 func NewHelpPixAdapter(logger *log.Logger) *HelpPixHTTPAdapter {
 	return &HelpPixHTTPAdapter{
-		logger
+		logger,
 	}
 }
 
@@ -119,7 +119,7 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 			for _, v := range v.Info.Participants {
 				if v.PUUID == summoner.PUUID {
 					// We only want data if it's for the champions listed above...
-					if v.ChampionName == "Yuumi" || v.ChampionName == "Janna" || v.ChampionName == "Sona" || v.ChampionName == "Soraka" || v.ChampionName == "Ammumu" || v.ChampionName == "Taric" || v.ChampionName == "Morgana" {
+					if v.ChampionName == "Yuumi" || v.ChampionName == "Janna" || v.ChampionName == "Sona" || v.ChampionName == "Soraka" || v.ChampionName == "Amumu" || v.ChampionName == "Taric" || v.ChampionName == "Morgana" {
 						champsPlayed = append(champsPlayed, v.ChampionName)
 
 						if v.Win {
@@ -149,7 +149,6 @@ func (adapter *HelpPixHTTPAdapter) GetSummonerInfo(w http.ResponseWriter, r *htt
 						summonerSpells = append(summonerSpells, summonerSpell1.Name)
 						summonerSpells = append(summonerSpells, summonerSpell2.Name)
 
-						// TODO: do something with items here
 						// get items with datadragon
 						var items []string
 						i1, _ := client.DataDragon.GetItem(fmt.Sprint(v.Item1))
